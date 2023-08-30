@@ -8,6 +8,8 @@ import org.keycloak.storage.adapter.AbstractUserAdapterFederatedStorage;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 public class User extends AbstractUserAdapterFederatedStorage {
 
@@ -42,5 +44,17 @@ public class User extends AbstractUserAdapterFederatedStorage {
 	@Override
 	public Map<String, List<String>> getAttributes() {
 		return Map.of("otp", List.of("true"));
+	}
+
+	/**
+	 * Jeph's note: both {@link AbstractUserAdapterFederatedStorage#getAttributes} and {@link AbstractUserAdapterFederatedStorage#getAttributeStream}
+	 * from the parent class retrieves the 'raw' fields of the user from the federated storage.
+	 * Unfortunately, the getAttributeStream does not create a stream out of getAttributes by default*
+	 */
+	@Override
+	public Stream<String> getAttributeStream(String name) {
+		Map<String, List<String>> attributes = this.getAttributes();
+		return attributes.keySet().stream().filter(attribute -> Objects.equals(attribute, name)).
+				map(attribute -> attributes.get(attribute).stream().findFirst().orElse(null));
 	}
 }
